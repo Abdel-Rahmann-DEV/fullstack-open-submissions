@@ -1,0 +1,14 @@
+HTTP Protocol
+
+- it's a comunication way to the server and client 
+
+- http header fields
+   - Method       -> GET | POST | PUT ...
+   - Path         -> example.com/api/users/:43242
+   - Protocol     -> HTTP/1.1
+   - Http headers -> as name and value
+   - Status code
+   - Remote address
+   - Referre policy 🔎
+
+- http acsept on request -> cookies and body and more information you like to send and return a response header to make a browser work on spisifk way
