@@ -34,7 +34,7 @@ let notes = [
    },
 ];
 app.get("/", (req, res) => {
-   res.status(200).send("/index.html");
+   res.status(200).sendFile("/index.html");
 });
 app.get("/api/notes", (req, res) => {
    res.status(200).json(notes);
