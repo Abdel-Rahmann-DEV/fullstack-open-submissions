@@ -33,7 +33,9 @@ let notes = [
       important: true,
    },
 ];
-
+app.get("/", (req, res) => {
+   res.status(200).send("/index.html");
+});
 app.get("/api/notes", (req, res) => {
    res.status(200).json(notes);
 });
