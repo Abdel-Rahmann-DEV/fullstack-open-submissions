@@ -1,71 +1,107 @@
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
+const Person = require("./models/person"); // Person Module
 
 const app = express();
+
+//====================================
+// Middleware Config
+//====================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("dist"));
-// moragan configuration
+
 morgan.token("req-body", (req, res) => {
    return JSON.stringify(req.body);
 });
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms :req-body"));
-let persons = [
-   {
-      id: 1,
-      name: "Arto Hellas",
-      number: "040-123456",
-   },
-   {
-      id: 2,
-      name: "Ada Lovelace",
-      number: "39-44-5323523",
-   },
-   {
-      id: 3,
-      name: "Dan Abramov",
-      number: "12-43-234345",
-   },
-   {
-      id: 4,
-      name: "Mary Poppendieck",
-      number: "39-23-6423122",
-   },
-];
 
+//====================================
+// Routes
+//====================================
 app.get("/api/persons", (req, res) => {
-   res.status(200).json(persons);
+   Person.find({}).then((persons) => res.json(persons));
 });
-app.get("/api/persons/:id", (req, res) => {
-   const id = +req.params.id;
-   const person = persons.find((p) => p.id === id);
-   if (!person) res.status(404).end();
-   else res.status(200).json(person);
+app.get("/api/persons/:id", (req, res, next) => {
+   const id = req.params.id;
+   Person.findById(id)
+      .then((person) => res.status(200).json(person))
+      .catch((err) => next(err));
 });
 app.delete("/api/persons/:id", (req, res) => {
-   const id = +req.params.id;
-   persons = persons.filter((p) => p.id !== id);
-   res.json({ status: "success" });
+   const id = req.params.id;
+   console.log(id);
+   Person.findOneAndDelete(id)
+      .then(() => res.status(200).json({ status: "success" }))
+      .catch(() => res.status(404).end());
 });
-app.post("/api/persons", (req, res) => {
-   const body = req.body;
-   if (!body.name || !body.number) return res.status(301).json({ status: "error", message: "The name or number is missing" });
-   const checkName = persons.find((p) => p.name === body.name);
-   if (checkName) return res.status(301).json({ status: "error", message: "The name already exists in the phonebook" });
-   const payload = { name: body.name, number: body.number, id: genId() };
-   persons.push(payload);
-   res.status(200).json(payload);
+app.post("/api/persons", async (req, res) => {
+   try {
+      const { name, number } = req.body;
+
+      if (!name || !number) {
+         return res.status(400).json({ status: "error", message: "The name or number is missing" });
+      }
+
+      const existingPerson = await Person.findOne({ name });
+
+      if (existingPerson) {
+         return res.status(409).json({ status: "error", message: "The name already exists in the phonebook" });
+      }
+
+      const newPerson = new Person({ name, number });
+      const savedPerson = await newPerson.save();
+      res.status(201).json(savedPerson);
+   } catch (error) {
+      console.error(error);
+      res.status(500).json({ status: "error", message: "Internal Server Error" });
+   }
+});
+app.patch("/api/persons/:id", (req, res) => {
+   const id = req.params.id;
+   const { number } = req.body;
+   if (!number) return res.status(404).json({ status: "error" }).end();
+   Person.findByIdAndUpdate(id, { number })
+      .then((newPerson) => res.status(200).json(newPerson))
+      .catch(() => res.status(404).json({ status: "error" }).end());
 });
 app.get("/info", (req, res) => {
-   const length = persons.length;
-   const currTime = getCurrTime();
-   res.status(200).send(`<p>Phonebook has info for ${length} people</p> <br /> <p>${currTime}</p>`);
-   ("sat jan 22 2022 22:27:20 GMT+0200 (Eastern European Standard Time)");
+   Person.countDocuments({})
+      .then((count) => {
+         const currTime = getCurrTime();
+         res.status(200).send(`<p>Phonebook has info for ${count} people</p> <br /> <p>${currTime}</p>`);
+         ("sat jan 22 2022 22:27:20 GMT+0200 (Eastern European Standard Time)");
+      })
+      .catch(() => res.status(404).end());
 });
 
-const genId = () => {
-   return Math.floor(Math.random() * 1000000 + 1);
+//====================================
+// Error Handleing Middleware
+//====================================
+const errorHandler = (err, req, res, next) => {
+   console.error(err.message);
+
+   const statusCode = err.statusCode || 500;
+
+   res.status(statusCode).json({
+      status: "error",
+      message: err.message || "Internal Server Error",
+   });
 };
+app.use(errorHandler);
+
+//====================================
+// Start Server
+//====================================
+const PORT = process.env.PORT;
+app.listen(PORT, () => {
+   console.log("server run in port " + PORT);
+});
+
+//====================================
+// Utilts Functions
+//====================================
 const getCurrTime = () => {
    const currentDate = new Date();
    const options = {
@@ -91,7 +127,3 @@ const getCurrTime = () => {
       .join(" ");
    return formattedCurrentDate;
 };
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-   console.log("server run in port " + PORT);
-});
