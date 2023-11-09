@@ -61,9 +61,9 @@ app.patch("/api/persons/:id", (req, res) => {
    const id = req.params.id;
    const { number } = req.body;
    if (!number) return res.status(404).json({ status: "error" }).end();
-   Person.findByIdAndUpdate(id, { number })
+   Person.findByIdAndUpdate(id, { number }, { new: true, runValidators: true, context: "query" })
       .then((newPerson) => res.status(200).json(newPerson))
-      .catch(() => res.status(404).json({ status: "error" }).end());
+      .catch((err) => res.status(404).json({ status: "error", message: err.message }).end());
 });
 app.get("/info", (req, res) => {
    Person.countDocuments({})
