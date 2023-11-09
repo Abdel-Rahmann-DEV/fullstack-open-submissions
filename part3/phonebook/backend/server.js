@@ -36,7 +36,7 @@ app.delete("/api/persons/:id", (req, res) => {
       .then(() => res.status(200).json({ status: "success" }))
       .catch(() => res.status(404).end());
 });
-app.post("/api/persons", async (req, res) => {
+app.post("/api/persons", async (req, res, next) => {
    try {
       const { name, number } = req.body;
 
@@ -54,8 +54,7 @@ app.post("/api/persons", async (req, res) => {
       const savedPerson = await newPerson.save();
       res.status(201).json(savedPerson);
    } catch (error) {
-      console.error(error);
-      res.status(500).json({ status: "error", message: "Internal Server Error" });
+      next(error);
    }
 });
 app.patch("/api/persons/:id", (req, res) => {
@@ -83,6 +82,9 @@ const errorHandler = (err, req, res, next) => {
    console.error(err.message);
 
    const statusCode = err.statusCode || 500;
+   if (err.name === "ValidationError") {
+      return res.status(400).json({ message: err.message });
+   }
 
    res.status(statusCode).json({
       status: "error",

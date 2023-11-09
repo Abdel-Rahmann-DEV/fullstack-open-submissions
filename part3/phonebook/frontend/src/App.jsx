@@ -87,11 +87,17 @@ const App = () => {
 
    const createNewPerson = () => {
       const newPerson = { name: newName, number: newNumber };
-      personsService.create(newPerson).then((response) => {
-         setPersons((currentPersons) => [...currentPersons, response.data]);
-         setNotification({ type: "success", message: `Added ${newName}` });
-         clearNotificationAfterDelay();
-      });
+      personsService
+         .create(newPerson)
+         .then((response) => {
+            setPersons((currentPersons) => [...currentPersons, response.data]);
+            setNotification({ type: "success", message: `Added ${newName}` });
+            clearNotificationAfterDelay();
+         })
+         .catch((err) => {
+            setNotification({ type: "error", message: err.response.data.message });
+            clearNotificationAfterDelay();
+         });
    };
    const clearNotificationAfterDelay = () => {
       setTimeout(() => {
