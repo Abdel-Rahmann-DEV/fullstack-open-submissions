@@ -15,58 +15,51 @@ app.use(cors());
 app.use(express.static('dist'));
 
 // moragan configuration
-morgan.token('req-body', (req) => JSON.stringify(req.body));
+morgan.token('req-body', (req, res, next) => {
+   return JSON.stringify(req.body);
+});
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body'));
 //= ===========================
 // Api
 //= ===========================
 
 // get notes
-app.get('/api/notes', (req, res) => {
+app.get('/api/notes', (req, res, next) => {
    Note.find({}).then((notes) => res.status(200).json(notes));
 });
 app.get('/api/notes/:id', (req, res, next) => {
-   const { id } = req.params;
+   const id = +req.params.id;
    Note.findById(id)
       .then((note) => res.status(200).json(note))
       .catch((error) => next(error));
 });
 // delete note
 app.delete('/api/notes/:id', (req, res, next) => {
-   const { id } = req.params;
+   const id = +req.params.id;
    Note.findByIdAndDelete(id)
       .then(() => res.status(204).end())
       .catch((error) => next(error));
 });
 // add new note
 app.post('/api/notes', (req, res, next) => {
-   const { content, important } = req.body;
-
-   if (!content) {
-      return res.status(301).json({ status: 'error', message: 'The note content is missing' });
-   }
-
-   const payload = { content, important: important || false };
+   const body = req.body;
+   if (!body.content) return res.status(301).json({ status: 'error', message: 'The note content is missing' });
+   const payload = { content: req.body.content, important: body.important || false };
    const newNote = new Note(payload);
-
-   return newNote
+   newNote
       .save()
       .then((note) => res.status(200).json(note))
-      .catch((err) => {
-         next(err); // Pass the error to the error handling middleware
-      });
-});
-
-app.get('/info', (req, res, next) => {
-   // eslint-disable-next-line no-use-before-define
-   const currTime = getCurrTime();
-   Note.countDocuments({})
-      .then((count) => res.status(200).send(`<p>Phonebook has info for ${count} people</p> <br /> <p>${currTime}</p>`))
       .catch((err) => next(err));
 });
+app.get('/info', (req, res, next) => {
+   const length = notes.length;
+   const currTime = getCurrTime();
+   res.status(200).send(`<p>Phonebook has info for ${length} people</p> <br /> <p>${currTime}</p>`);
+   ('sat jan 22 2022 22:27:20 GMT+0200 (Eastern European Standard Time)');
+});
 // update note
-app.patch('/api/notes/:id', (req, res) => {
-   const { id } = req.params;
+app.patch('/api/notes/:id', (req, res, next) => {
+   const id = req.params.id;
    const payload = {
       important: req.body.important,
    };
@@ -84,9 +77,9 @@ app.patch('/api/notes/:id', (req, res) => {
       });
 });
 
-//= ===========================
+//============================
 // Unknown Endpoint
-//= ===========================
+//============================
 const unknownEndpoint = (request, response) => {
    response.status(404).send({ error: 'unknown endpoint' });
 };
@@ -94,32 +87,32 @@ const unknownEndpoint = (request, response) => {
 // handler of requests with unknown endpoint
 app.use(unknownEndpoint);
 
-//= ===========================
+//============================
 // Error Handle
-//= ===========================
+//============================
 const errorHandler = (err, req, res, next) => {
+   console.log(err.name);
    if (err.name === 'CastError') {
-      return res.status(400).send({ error: 'malformatted id' });
-   }
-   if (err.name === 'ValidationError') {
+      return response.status(400).send({ error: 'malformatted id' });
+   } else if (err.name === 'ValidationError') {
       return res.status(400).json({ error: err.message });
    }
 
-   return next(err);
+   next(err);
 };
 app.use(errorHandler);
 
-//= ===========================
+//============================
 // Start server
-//= ===========================
-const { PORT } = process.env;
+//============================
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
-   console.log(`server run in port ${PORT}`);
+   console.log('server run in port ' + PORT);
 });
 
-//= ===========================
+//============================
 // Utilts Functions
-//= ===========================
+//============================
 
 const getCurrTime = () => {
    const currentDate = new Date();
