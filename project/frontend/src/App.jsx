@@ -46,20 +46,16 @@ const App = () => {
          setNewNote("");
       });
    };
-   const toggleImportanceOf = (id) => {
-      const noteToToggle = notes.find((note) => note.id === id);
-      if (!noteToToggle) return;
-
-      const newImportance = !noteToToggle.important;
-
+   const toggleImportanceOf = (note) => {
       noteService
-         .update(id, { important: newImportance })
+         .update(note.id, { ...note, important: !note.important })
          .then((response) => {
-            const updatedNotes = notes.map((note) => (note.id === id ? { ...note, important: newImportance } : note));
+            console.log(response)
+            const updatedNotes = notes.map((n) => (n.id === note.id  ? response.data : n));
             setNotes(updatedNotes);
          })
          .catch((error) => {
-            setErrorMessage(`Note '${noteToToggle.content}' was already removed from server`);
+            setErrorMessage(`Note '${note.content}' was already removed from server`);
             setTimeout(() => {
                setErrorMessage(null);
             }, 5000);
@@ -83,7 +79,7 @@ const App = () => {
          </div>
          <ul>
             {notesToShow.map((note) => (
-               <Note key={note.id} note={note} toggleImportance={() => toggleImportanceOf(note.id)} deleteNote={deleteNote} />
+               <Note key={note.id} note={note} toggleImportance={() => toggleImportanceOf(note)} deleteNote={deleteNote} />
             ))}
          </ul>
          <Footer />
