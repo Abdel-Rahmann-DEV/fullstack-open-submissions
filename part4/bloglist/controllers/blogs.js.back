@@ -1,8 +1,18 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const Blog = require('../modules/blog');
-const middleware = require('../utils/middleware');
+const User = require('../modules/user');
+const { SECRIT_KEY } = require('../utils/config');
 
 const blogRoute = express.Router();
+
+const getTokenFrom = (req) => {
+   const authorization = req.get('authorization');
+   if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+      return authorization.substring(7);
+   }
+   return null;
+};
 
 blogRoute.get('/', async (req, res, next) => {
    try {
@@ -24,7 +34,7 @@ blogRoute.get('/:id', async (req, res, next) => {
    }
 });
 
-blogRoute.post('/', middleware.userExtractor, async (req, res, next) => {
+blogRoute.post('/', async (req, res, next) => {
    try {
       const { title, url, likes } = req.body;
 
@@ -32,8 +42,22 @@ blogRoute.post('/', middleware.userExtractor, async (req, res, next) => {
          return res.status(400).json({ error: 'Title and URL are required fields.' });
       }
 
-      const { user } = req;
+      const token = getTokenFrom(req);
 
+      if (!token) {
+         return res.status(401).json({ error: 'Token missing' });
+      }
+
+      const decoded = jwt.verify(token, SECRIT_KEY);
+
+      if (!decoded.id) {
+         return res.status(401).json({ error: 'Invalid token' });
+      }
+
+      const user = await User.findById(decoded.id);
+      if (!user) {
+         return next({ name: 'CastError' });
+      }
       const blog = new Blog({
          title,
          url,
@@ -51,11 +75,27 @@ blogRoute.post('/', middleware.userExtractor, async (req, res, next) => {
    }
 });
 
-blogRoute.delete('/:id', middleware.userExtractor, async (req, res, next) => {
+blogRoute.delete('/:id', async (req, res, next) => {
    const { id } = req.params;
 
    try {
-      const { user } = req;
+      const token = await getTokenFrom(req);
+
+      if (!token) {
+         return res.status(401).json({ error: 'Token missing' });
+      }
+
+      const decoded = jwt.verify(token, SECRIT_KEY);
+
+      if (!decoded.id) {
+         return res.status(401).json({ error: 'Invalid token' });
+      }
+
+      const user = await User.findById(decoded.id);
+
+      if (!user) {
+         return next({ name: 'CastError', message: 'Not found user' });
+      }
 
       const blog = await Blog.findById(id);
 
@@ -77,12 +117,28 @@ blogRoute.delete('/:id', middleware.userExtractor, async (req, res, next) => {
    }
 });
 
-blogRoute.patch('/:id', middleware.userExtractor, async (req, res, next) => {
+blogRoute.patch('/:id', async (req, res, next) => {
    const { id } = req.params;
    const update = req.body;
 
    try {
-      const { user } = req;
+      const token = getTokenFrom(req);
+
+      if (!token) {
+         return res.status(401).json({ error: 'Token missing' });
+      }
+
+      const decoded = jwt.verify(token, SECRIT_KEY);
+
+      if (!decoded.id) {
+         return res.status(401).json({ error: 'Invalid token' });
+      }
+
+      const user = await User.findById(decoded.id);
+
+      if (!user) {
+         return next({ name: 'CastError', message: 'Not found user' });
+      }
 
       const blog = await Blog.findById(id);
 

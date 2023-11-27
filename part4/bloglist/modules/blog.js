@@ -7,22 +7,19 @@ const blogSchema = new mongoose.Schema({
       required: [true, 'Title is required'],
       minlength: [3, 'Title must be at least 3 characters long'],
    },
-   author: {
-      type: String,
-      required: [true, 'Author is required'],
-   },
    url: {
       type: String,
       required: [true, 'URL is required'],
-      match: [
-         /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/,
-         'Invalid URL format. Please provide a valid URL.',
-      ],
+      match: [/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/, 'Invalid URL format. Please provide a valid URL.'],
    },
    likes: {
       type: Number,
       default: 0,
       min: 0,
+   },
+   user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
    },
 });
 

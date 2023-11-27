@@ -1,0 +1,8 @@
+what is status codes for this fealids -> 
+missing token error
+invalid token error
+valid token but none exist user
+crate new blog with returned data as json
+error code with missing fealids of body request
+none existing id error
+mongoose validation error

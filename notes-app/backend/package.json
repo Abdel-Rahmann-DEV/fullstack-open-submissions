@@ -1,7 +1,7 @@
 {
-  "name": "bloglist",
+  "name": "backend",
   "version": "1.0.0",
-  "description": "the bolg project",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=production node index.js",
@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "lint-fix": "eslint . --fix"
   },
-  "author": "Abdo",
+  "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -18,7 +18,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^6.12.2",
+    "mongoose": "^8.0.0",
     "morgan": "^1.10.0"
   },
   "devDependencies": {
