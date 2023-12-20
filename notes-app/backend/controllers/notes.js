@@ -2,6 +2,7 @@ const notesRouter = require('express').Router();
 const jwt = require('jsonwebtoken');
 const Note = require('../models/note');
 const User = require('../models/user');
+const config = require('../utils/config');
 
 const getTokenFrom = (req) => {
    const authorization = req.get('authorization');
@@ -23,21 +24,19 @@ notesRouter.get('/', async (request, response, next) => {
 notesRouter.get('/:id', async (request, response, next) => {
    try {
       const note = await Note.findById(request.params.id);
-      if (note) {
-         response.json(note);
-      } else {
-         response.status(404).end();
-      }
+      response.status(200).json(note);
    } catch (error) {
+      console.log('throw error');
       next(error);
    }
 });
 
+// response.status(404).end();
 notesRouter.post('/', async (request, response, next) => {
    try {
       const { content, important } = request.body;
       const token = getTokenFrom(request);
-      const decodedToken = await jwt.verify(token, process.env.SECRET);
+      const decodedToken = await jwt.verify(token, config.SECRET_KEY);
       if (!decodedToken.id) {
          return response.status(401).json({ error: 'Token invalid or missing' });
       }
@@ -71,14 +70,17 @@ notesRouter.delete('/:id', async (request, response, next) => {
 });
 
 notesRouter.patch('/:id', async (request, response, next) => {
-   const { content, important } = request.body;
    try {
       const { id } = request.params;
-      const updatedNote = await Note.findOneAndUpdate(id, { content, important }, { new: true });
-      response.json(updatedNote);
+      const { content, important } = request.body;
+      const updatedNote = await Note.findOneAndUpdate({ _id: id }, { content, important }, { new: true });
+      if (!updatedNote) {
+         return response.status(404).json({ error: 'Note not found' });
+      }
+
+      return response.json(updatedNote);
    } catch (error) {
-      next(error);
+      return next(error);
    }
 });
-
 module.exports = notesRouter;

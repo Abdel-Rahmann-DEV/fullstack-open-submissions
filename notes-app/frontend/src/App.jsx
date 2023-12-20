@@ -1,90 +1,132 @@
-import { useState, useEffect } from "react";
-import Note from "./components/Note";
-import axios from "axios";
-import noteService from "./services/notes";
-const Notification = ({ message }) => {
-   if (message === null) {
-      return null;
-   }
+import React, { useState, useEffect, useRef } from 'react';
+import Note from './components/Note';
+import noteService from './services/notes';
+import loginService from './services/login';
+import LoginForm from './components/LoginForm';
+import Togglable from './components/Togglable';
+import NoteForm from './components/NoteForm';
+import Footer from './components/Footer';
+import Notification from './components/Notification';
 
-   return <div className="error">{message}</div>;
-};
-const Footer = () => {
-   const footerStyle = {
-      color: "green",
-      fontStyle: "italic",
-      fontSize: 16,
-   };
-   return (
-      <div style={footerStyle}>
-         <br />
-         <em>Note app, Department of Computer Science, University of Helsinki 2023</em>
-      </div>
-   );
-};
-const App = () => {
+function App() {
    const [notes, setNotes] = useState([]);
-   const [newNote, setNewNote] = useState("");
    const [showAll, setShowAll] = useState(true);
    const [errorMessage, setErrorMessage] = useState(null);
+   const [username, setUsername] = useState('');
+   const [password, setPassword] = useState('');
+   const [user, setUser] = useState(null);
+   const noteFormRef = useRef();
 
    useEffect(() => {
       noteService.getAll().then((response) => {
-         setNotes(response.data);
+         setNotes(response);
       });
    }, []);
 
-   const addNote = (event) => {
-      event.preventDefault();
-      const noteObject = {
-         content: newNote,
-         important: Math.random() > 0.5,
-      };
+   useEffect(() => {
+      const loggedUserJSON = window.localStorage.getItem('loggedNoteappUser');
+      if (loggedUserJSON) {
+         const loggedUser = JSON.parse(loggedUserJSON);
+         setUser(loggedUser);
+         noteService.setToken(loggedUser.token);
+      }
+   }, []);
 
-      noteService.create(noteObject).then((response) => {
-         setNotes(notes.concat(response.data));
-         setNewNote("");
-      });
+   const addNote = async (payload) => {
+      try {
+         const response = await noteService.create(payload);
+         setNotes((prevNotes) => [...prevNotes, response]);
+         noteFormRef.current.toggleVisibility();
+      } catch (error) {
+         setErrorMessage('Error adding note');
+         setTimeout(() => {
+            setErrorMessage(null);
+         }, 5000);
+      }
    };
-   const toggleImportanceOf = (note) => {
-      noteService
-         .update(note.id, { ...note, important: !note.important })
-         .then((response) => {
-            console.log(response)
-            const updatedNotes = notes.map((n) => (n.id === note.id  ? response.data : n));
-            setNotes(updatedNotes);
-         })
-         .catch((error) => {
-            setErrorMessage(`Note '${note.content}' was already removed from server`);
-            setTimeout(() => {
-               setErrorMessage(null);
-            }, 5000);
-            setNotes(notes.filter((n) => n.id !== id));
+
+   const handleNoteError = (note) => {
+      setErrorMessage(`Note '${note.content}' was already removed from the server`);
+      setTimeout(() => {
+         setErrorMessage(null);
+      }, 5000);
+      setNotes((prevNotes) => prevNotes.filter((n) => n.id !== note.id));
+   };
+   const toggleImportanceOf = async (note) => {
+      try {
+         const response = await noteService.update(note.id, { ...note, important: !note.important });
+         setNotes((prevNotes) => prevNotes.map((n) => (n.id === note.id ? response : n)));
+      } catch (error) {
+         handleNoteError(note);
+      }
+   };
+
+   const handleLogin = async (event) => {
+      event.preventDefault();
+
+      try {
+         const data = await loginService.login({
+            username,
+            password,
          });
+         window.localStorage.setItem('loggedNoteappUser', JSON.stringify(data));
+         noteService.setToken(data.token);
+         setUser(data);
+         setUsername('');
+         setPassword('');
+      } catch (exception) {
+         console.error(exception);
+         setErrorMessage('Wrong credentials');
+         setTimeout(() => {
+            setErrorMessage(null);
+         }, 5000);
+      }
    };
-   const deleteNote = () => {};
+
+   const loginForm = () => (
+      <Togglable buttonLabel="login">
+         <LoginForm username={username} password={password} handleUsernameChange={({ target }) => setUsername(target.value)} handlePasswordChange={({ target }) => setPassword(target.value)} handleSubmit={handleLogin} />
+      </Togglable>
+   );
+
+   const notesForm = () => (
+      <Togglable buttonLabel="new note" ref={noteFormRef}>
+         <NoteForm createNote={addNote} />
+      </Togglable>
+   );
+
    const notesToShow = showAll ? notes : notes.filter((note) => note.important);
+
    return (
       <div>
          <h1>Notes</h1>
          <Notification message={errorMessage} />
+         {!user && loginForm()}
+         {user && (
+            <div>
+               <p>
+                  {user.userData.name}
+                  {' '}
+                 logged in
+               </p>
+               {notesForm()}
+            </div>
+         )}
+
          <div>
-            <form onSubmit={addNote}>
-               <input type="text" value={newNote} onChange={(event) => setNewNote(event.target.value)} />
-               <button type="submit">Add Note</button>
-            </form>
-         </div>
-         <div>
-            <button onClick={() => setShowAll(!showAll)}>show {showAll ? "important" : "all"}</button>
+            <button onClick={() => setShowAll(!showAll)}>
+              show
+               {showAll ? 'important' : 'all'}
+            </button>
          </div>
          <ul>
             {notesToShow.map((note) => (
-               <Note key={note.id} note={note} toggleImportance={() => toggleImportanceOf(note)} deleteNote={deleteNote} />
+               <Note key={note.id} note={note} toggleImportance={() => toggleImportanceOf(note)} />
             ))}
          </ul>
          <Footer />
       </div>
    );
-};
+}
 
 export default App;

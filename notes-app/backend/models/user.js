@@ -16,16 +16,6 @@ const userSchema = new mongoose.Schema({
       },
    ],
 });
-userSchema.pre('save', async function (next) {
-   const user = this; // 'this' refers to the user document
-
-   if (user.isModified('password')) {
-      const saltRounds = 12;
-      user.password = await bcrypt.hash(user.password, saltRounds);
-   }
-
-   next();
-});
 
 userSchema.set('toJSON', {
    transform: (document, returnedObject) => {
@@ -39,6 +29,17 @@ userSchema.set('toJSON', {
 
       return modifiedObject;
    },
+});
+
+userSchema.pre('save', async function (next) {
+   const user = this; // 'this' refers to the user document
+
+   if (user.isModified('password')) {
+      const saltRounds = 12;
+      user.password = await bcrypt.hash(user.password, saltRounds);
+   }
+
+   next();
 });
 
 const User = mongoose.model('User', userSchema);

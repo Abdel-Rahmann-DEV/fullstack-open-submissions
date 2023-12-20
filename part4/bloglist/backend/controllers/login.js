@@ -27,7 +27,7 @@ loginRoute.post('/', async (req, res, next) => {
          id: user.id,
       };
       const token = jwt.sign(payload, SECRIT_KEY, { expiresIn: '1h' });
-      return res.status(200).json({ user, token });
+      return res.status(200).json({ userData: user, token });
    } catch (exception) {
       return next(exception);
    }

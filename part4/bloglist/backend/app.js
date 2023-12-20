@@ -34,12 +34,16 @@ if (config.INVAIROMENT === 'development') {
    morgan.token('req-body', (req) => JSON.stringify(req.body));
    app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body'));
 }
-
 // API Routes
 app.use('/api/blogs', blogsRoute);
 app.use('/api/users', userRoute);
 app.use('/api/login', loginRoute);
 
+if (config.INVAIROMENT === 'test') {
+   const testingRoute = require('./controllers/testing');
+   
+   app.use('/api/testing', testingRoute);
+}
 // Middleware for handling unknown endpoints and errors
 app.use(middleware.unknownEndpoint);
 app.use(middleware.errorHandler);

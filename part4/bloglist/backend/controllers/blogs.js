@@ -7,7 +7,34 @@ const blogRoute = express.Router();
 blogRoute.get('/', async (req, res, next) => {
    try {
       const blogs = await Blog.find({}).populate('user');
-      return res.status(200).json(blogs);
+      const modifiedBlogs = blogs.map((blog) => ({
+         ...blog.toObject(),
+         user: blog.user ? blog.user.name : null,
+      }));
+      return res.status(200).json(modifiedBlogs);
+   } catch (err) {
+      return next(err);
+   }
+});
+blogRoute.put('/:id', middleware.userExtractor, async (req, res, next) => {
+   const { id } = req.params;
+   const { user } = req;
+
+   try {
+      const updatedBlog = await Blog.findOneAndUpdate(
+         { _id: id },
+         {
+            $inc: { likes: 1 },
+            $addToSet: { usersLikes: user.id },
+         },
+         { new: true }
+      );
+
+      if (!updatedBlog) {
+         return res.status(404).json({ error: 'Blog not found' });
+      }
+
+      return res.status(200).json({ message: 'Blog liked successfully', blog: updatedBlog });
    } catch (err) {
       return next(err);
    }
@@ -45,7 +72,7 @@ blogRoute.post('/', middleware.userExtractor, async (req, res, next) => {
 
       user.blogs = user.blogs.concat(savedBlog._id);
       await user.save();
-      return res.status(201).json(savedBlog);
+      return res.status(201).json({ ...savedBlog.toJSON(), user: user.name });
    } catch (err) {
       return next(err);
    }

@@ -22,4 +22,13 @@ userRoute.post('/', async (req, res, next) => {
       return next(exption);
    }
 });
+userRoute.get('/userBlogs/:id', async (req, res, next) => {
+   const { id } = req.params;
+   try {
+      const user = await User.findById(id);
+      return res.status(200).json({ blogs: user.blogs });
+   } catch (err) {
+      return next(err);
+   }
+});
 module.exports = userRoute;

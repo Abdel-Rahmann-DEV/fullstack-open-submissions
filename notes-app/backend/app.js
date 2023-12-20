@@ -12,10 +12,12 @@ const loginRouter = require('./controllers/login');
 const app = express();
 
 // Connect to MONGO_DB
-mongoose.set('strictQuery', false);
+// mongoose.set('strictQuery', false);
 logger.info('connecting to', config.MONGODB_URI);
 mongoose
-   .connect(config.MONGODB_URI)
+   .connect(config.MONGODB_URI, {
+      useUnifiedTopology: true,
+   })
    .then(() => {
       logger.info('connected to MongoDB');
    })
@@ -28,14 +30,18 @@ app.use(express.static('dist'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 morgan.token('req-body', (req) => JSON.stringify(req.body));
-if (process.env.NODE_ENV !== 'test') {
+if (config.ENV !== 'test') {
    app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body'));
 }
 
 app.use('/api/notes', notesRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/login', loginRouter);
+if (config.ENV === 'test') {
+   const testingRouter = require('./controllers/testing');
 
+   app.use('/api/testing', testingRouter);
+}
 app.use(middleware.unknownEndpoint);
 app.use(middleware.errorHandler);
 

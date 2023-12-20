@@ -1,11 +1,14 @@
-const logger = require('./logger');
 const mongoose = require('mongoose');
+const logger = require('./logger');
+
 const unknownEndpoint = (request, response) => {
    response.status(404).send({ error: 'unknown endpoint' });
 };
 
 const errorHandler = (error, request, response, next) => {
-   logger.error(error.message);
+   logger.error('error name', error.name);
+   logger.error('error message', error.message);
+   logger.error(error);
 
    if (error instanceof mongoose.Error.ValidationError) {
       const validationErrors = Object.values(error.errors).map((err) => err.message);

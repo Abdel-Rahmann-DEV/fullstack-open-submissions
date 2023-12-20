@@ -1,5 +1,5 @@
-const Note = ({ note, toggleImportance }) => {
-   const label = note.important ? "make not important" : "make important";
+function Note({ note, toggleImportance }) {
+   const label = note.important ? 'make not important' : 'make important';
 
    return (
       <li className="note">
@@ -7,6 +7,6 @@ const Note = ({ note, toggleImportance }) => {
          <button onClick={toggleImportance}>{label}</button>
       </li>
    );
-};
+}
 
 export default Note;
