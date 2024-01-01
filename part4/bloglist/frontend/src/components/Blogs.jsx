@@ -1,12 +1,12 @@
 import Blog from './Blog';
-
-const Blogs = ({ username, blogs, handleLogOut, showNotification, userBlogs, deleteBlog, addLike }) => {
+import { useSelector } from 'react-redux';
+const Blogs = () => {
+   const blogs = useSelector((state) => state.blogs.data);
    return (
-      <div >
-         {username} logged in <button onClick={handleLogOut}>logout</button>
-         <div className="blogs-cont">
+      <div>
+         <div className='blogs-cont'>
             {blogs.map((e) => (
-               <Blog key={e._id} blog={e} showNotification={showNotification} userBlogs={userBlogs} deleteBlog={deleteBlog} addLike={addLike} />
+               <Blog key={e.id} blog={e} />
             ))}
          </div>
       </div>

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const baseUrl = '/api/users';
 
-const userBlog = async (id) => {
+const getUserBlogs = async (id) => {
    try {
       const response = await axios.get(`${baseUrl}/userBlogs/${id}`);
       return response.data.blogs;
@@ -11,8 +11,29 @@ const userBlog = async (id) => {
       throw err;
    }
 };
-const blogService = {
-   userBlog,
+const allUsers = async (id) => {
+   try {
+      const response = await axios.get(baseUrl);
+      return response.data;
+   } catch (err) {
+      console.log(err);
+      throw err;
+   }
+};
+const getUserById = async (id) => {
+   try {
+      const response = await axios.get(`${baseUrl}/${id}`);
+      return response.data;
+   } catch (err) {
+      console.log(err);
+      throw err;
+   }
 };
 
-export default blogService;
+const usersServices = {
+   getUserBlogs,
+   allUsers,
+   getUserById,
+};
+
+export default usersServices;

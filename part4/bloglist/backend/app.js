@@ -41,7 +41,7 @@ app.use('/api/login', loginRoute);
 
 if (config.INVAIROMENT === 'test') {
    const testingRoute = require('./controllers/testing');
-   
+
    app.use('/api/testing', testingRoute);
 }
 // Middleware for handling unknown endpoints and errors

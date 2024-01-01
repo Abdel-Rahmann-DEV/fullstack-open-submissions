@@ -10,6 +10,18 @@ userRoute.get('/', async (req, res, next) => {
       return next(exption);
    }
 });
+userRoute.get('/:id', async (req, res, next) => {
+   const { id } = req.params;
+   try {
+      const user = await User.findById(id).populate('blogs');
+      if (!user) {
+         return res.status(404).json({ error: 'this account not found!', errorCode: '0004' });
+      }
+      return res.status(200).json(user);
+   } catch (exption) {
+      return next(exption);
+   }
+});
 userRoute.post('/', async (req, res, next) => {
    const { username, password, name } = req.body;
    try {

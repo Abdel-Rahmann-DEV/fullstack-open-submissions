@@ -17,8 +17,17 @@ const getAll = async () => {
       throw error;
    }
 };
+const getBlogById = async (id) => {
+   try {
+      const response = await axios.get(`${baseUrl}/${id}`);
+      return response.data;
+   } catch (error) {
+      console.error('Error fetching blogs:', error.message);
+      throw error;
+   }
+};
 
-const create = async (payload) => {
+const createNew = async (payload) => {
    try {
       const config = {
          headers: {
@@ -33,7 +42,7 @@ const create = async (payload) => {
       throw error;
    }
 };
-const like = async (id) => {
+const setLike = async (id) => {
    try {
       const config = {
          headers: {
@@ -43,7 +52,7 @@ const like = async (id) => {
       const response = await axios.put(`${baseUrl}/${id}`, {}, config);
       return response.data;
    } catch (err) {
-      console.log(err)
+      console.log(err);
       throw err;
    }
 };
@@ -57,17 +66,30 @@ const deleteBlog = async (id) => {
       const response = await axios.delete(`${baseUrl}/${id}`, config);
       return response.data;
    } catch (err) {
-      console.log(err)
+      console.log(err);
+      throw err;
+   }
+};
+const addComment = async ({ id, text }) => {
+   try {
+      const response = await axios.post(`${baseUrl}/${id}/comments`, {
+         comment: text,
+      });
+      return response.data;
+   } catch (err) {
+      console.log(err);
       throw err;
    }
 };
 
 const blogService = {
    getAll,
-   create,
+   createNew,
    setToken,
-   like,
+   setLike,
    deleteBlog,
+   getBlogById,
+   addComment,
 };
 
 export default blogService;

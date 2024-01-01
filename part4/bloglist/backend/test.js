@@ -31,7 +31,7 @@ db.once('open', () => {
 
    const addLikes = async () => {
       try {
-         for (let i in users) {
+         for (const i in users) {
             const user = await new User(users[i]);
             await user.save();
             console.log('User', user.username, 'Is Saved');

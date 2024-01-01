@@ -1,0 +1,4 @@
+Takes on routing => 
+- Parameterized route (basics route)
+- useNavigate
+- redirect

@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Define the Note Schema
 const blogSchema = new mongoose.Schema({
    title: {
       type: String,
@@ -17,10 +16,27 @@ const blogSchema = new mongoose.Schema({
       default: 0,
       min: 0,
    },
+   comments: [
+      {
+         text: {
+            type: String,
+            required: true,
+         },
+      },
+   ],
    usersLikes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      required: true,
+   },
+});
+
+blogSchema.set('toJSON', {
+   transform: (document, returnedObject) => {
+      returnedObject.id = returnedObject._id.toString();
+      delete returnedObject._id;
+      delete returnedObject.__v;
    },
 });
 

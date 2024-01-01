@@ -80,15 +80,24 @@ describe('Blog app', function () {
          cy.get('button').contains('like');
       });
       it('fails with wrong credentials', function () {
+         cy.intercept('POST', '/api/blogs', {
+            statusCode: 400,
+            body: { error: 'Invalid blog data' },
+         }).as('createBlog');
+
          cy.contains('new blog').click();
          cy.get('#title').should('exist').type('test blog added');
          cy.get('#url').should('exist').type('not valid url');
 
          cy.get('button[type=submit]').contains('Create').click();
-         cy.contains('Error creating blog').should('have.css', 'backgroundColor', 'rgb(255, 82, 82)');
-         cy.get('.blogs-cont').contains('test blog added').should('not.exist');
-         cy.get('button').contains('new blog');
 
+         cy.wait('@createBlog');
+
+         cy.contains('Error creating blog').should('have.css', 'backgroundColor', 'rgb(255, 82, 82)');
+
+         cy.get('.blogs-cont').contains('test blog added').should('not.exist');
+
+         cy.get('button').contains('new blog');
          cy.get('#title').should('exist');
          cy.get('#url').should('exist');
       });
@@ -136,7 +145,7 @@ describe('Blog app', function () {
             cy.get('.blog').contains('blog added for cypress').parent().get('button').contains('delete');
             cy.get('.blog').contains('title with different user').parent().contains('delete').should('not.exist');
          });
-         it.only('blogs ordered by likes', function () {
+         it('blogs ordered by likes', function () {
             const numberOfBlogs = 20;
             const userCredentials = { username: 'abdo', password: 'test' };
 

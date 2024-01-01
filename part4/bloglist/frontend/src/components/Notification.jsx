@@ -1,7 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-
+import { useSelector } from 'react-redux';
 const Notification = ({ type, message }) => {
+   const notification = useSelector((state) => state.notification);
+   if (!notification.message) return null;
+
    const notificationStyle = {
       padding: '10px',
       margin: '10px 0',
@@ -10,22 +12,17 @@ const Notification = ({ type, message }) => {
       fontWeight: 'bold',
    };
 
-   if (type === 'error') {
+   if (notification.type === 'error') {
       notificationStyle.backgroundColor = '#ff5252';
-   } else if (type === 'success') {
+   } else if (notification.type === 'success') {
       notificationStyle.backgroundColor = '#4caf50';
    }
 
    return (
       <div className={'NF-' + type} style={notificationStyle}>
-         {message}
+         {notification.message}
       </div>
    );
-};
-
-Notification.propTypes = {
-   type: PropTypes.oneOf(['error', 'success']).isRequired,
-   message: PropTypes.string.isRequired,
 };
 
 export default Notification;

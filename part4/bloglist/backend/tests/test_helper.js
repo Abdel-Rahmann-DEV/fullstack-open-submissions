@@ -3,6 +3,7 @@ const Blog = require('../modules/blog');
 const User = require('../modules/user');
 const { SECRIT_KEY } = require('../utils/config');
 const config = require('../utils/config');
+
 const initialBlogs = [
    {
       title: 'The Art of Coding',

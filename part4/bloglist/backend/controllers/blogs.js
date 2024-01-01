@@ -7,11 +7,7 @@ const blogRoute = express.Router();
 blogRoute.get('/', async (req, res, next) => {
    try {
       const blogs = await Blog.find({}).populate('user');
-      const modifiedBlogs = blogs.map((blog) => ({
-         ...blog.toObject(),
-         user: blog.user ? blog.user.name : null,
-      }));
-      return res.status(200).json(modifiedBlogs);
+      return res.status(200).json(blogs);
    } catch (err) {
       return next(err);
    }
@@ -43,9 +39,29 @@ blogRoute.put('/:id', middleware.userExtractor, async (req, res, next) => {
 blogRoute.get('/:id', async (req, res, next) => {
    const { id } = req.params;
    try {
-      const blog = await Blog.findById(id);
+      const blog = await Blog.findById(id).populate('user');
       if (blog) return res.status(200).json(blog);
       return next({ name: 'CastError', message: 'Not found blog' });
+   } catch (err) {
+      return next(err);
+   }
+});
+
+blogRoute.post('/:id/comments', async (req, res, next) => {
+   const { id } = req.params;
+   const { comment } = req.body;
+
+   try {
+      if (!comment) {
+         return res.status(400).json({ error: 'Comment is required' });
+      }
+      const blog = await Blog.findById(id);
+      if (!blog) {
+         return res.status(404).json({ error: 'Blog not found' });
+      }
+      blog.comments.push({ text: comment });
+      const updatedBlog = await blog.save();
+      return res.status(201).json(updatedBlog);
    } catch (err) {
       return next(err);
    }
@@ -72,7 +88,7 @@ blogRoute.post('/', middleware.userExtractor, async (req, res, next) => {
 
       user.blogs = user.blogs.concat(savedBlog._id);
       await user.save();
-      return res.status(201).json({ ...savedBlog.toJSON(), user: user.name });
+      return res.status(201).json({ ...blog, user });
    } catch (err) {
       return next(err);
    }
