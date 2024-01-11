@@ -2,15 +2,49 @@ require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
 const Person = require('./models/person'); // Person Module
+const { posts } = require('./resolvers');
+const { graphqlHTTP } = require('express-graphql');
+const { buildSchema } = require('graphql');
+
+// Define your schema
+const schema = buildSchema(`
+type Post {
+   userId: Int
+   id: Int
+   title: String
+   body: String
+}
+
+   type RootQuery {
+      postsCount: Int!
+      posts: [Post]
+      findPost(id: String!): Post
+   }
+   
+   schema {
+      query: RootQuery
+   }
+   `);
+const root = {
+   posts: () => posts,
+};
 
 const app = express();
-
 //= ===================================
 // Middleware Config
 //= ===================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('dist'));
+
+app.use(
+   '/graphql',
+   graphqlHTTP({
+      schema,
+      rootValue: root,
+      graphiql: true, // Enable the GraphiQL interface for testing in the browser
+   })
+);
 
 morgan.token('req-body', (req) => JSON.stringify(req.body));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body'));
